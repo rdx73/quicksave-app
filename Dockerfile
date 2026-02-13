@@ -29,6 +29,8 @@ RUN mkdir -p $YTDLP_CACHE_DIR && \
     yt-dlp --cache-dir $YTDLP_CACHE_DIR \
     --extractor-args "youtube:js_runtime=node" \
     --version
+    
+RUN pip install --upgrade yt-dlp-ejs==0.4.0
 
 # Copy project
 COPY . .
