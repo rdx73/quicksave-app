@@ -1,46 +1,47 @@
+# 1. Ambil stage Deno resmi sebagai sumber binary
+FROM denoland/deno:bin-2.1.9 AS deno-stage
+
+# 2. Gunakan image Python sebagai base utama
 FROM python:3.10-slim-bookworm
 
-# 1. Install dependency sistem
+# 3. Copy binary Deno dari stage pertama ke lokasi global (Saran Opsi 1)
+COPY --from=deno-stage /usr/bin/deno /usr/local/bin/deno
+
+# 4. Install dependency sistem (FFmpeg, dll)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     curl \
     ca-certificates \
-    unzip \
  && rm -rf /var/lib/apt/lists/*
 
-# 2. Install Deno secara global ke /usr/local/bin (Sesuai saran Fin & Adifagos)
-# Menggunakan flag -s -- -d agar langsung masuk ke folder yang bisa diakses semua user
-RUN curl -fsSL https://deno.land/x/install/install.sh | sh -s -- -d /usr/local/bin
-
-# 3. Berikan izin eksekusi eksplisit (Sesuai saran Fin)
+# 5. Berikan izin eksekusi & Atur Environment (Saran Admin & Fin)
 RUN chmod +x /usr/local/bin/deno
-
-# 4. Atur Environment Path agar Deno terdeteksi
 ENV PATH="/usr/local/bin:$PATH"
 ENV YTDLP_JS_RUNTIME=deno
 
 WORKDIR /app
 
-# 5. Setup User koyeb
+# 6. Setup User koyeb
 RUN useradd -m koyeb
 ENV YTDLP_CACHE_DIR=/app/yt_cache
 
-# 6. Install Python requirements
+# 7. Install Python requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --upgrade yt-dlp-ejs==0.4.0
 
-# 7. Copy project & Pindahkan kepemilikan
+# 8. Copy project & Pindahkan kepemilikan
 COPY . .
 RUN mkdir -p $YTDLP_CACHE_DIR && \
     chown -R koyeb:koyeb /app && \
     chmod -R 755 $YTDLP_CACHE_DIR
 
-# 8. Jalankan pengecekan versi (untuk memastikan build sukses)
+# 9. Cek versi SEBELUM pindah ke USER koyeb (Saran Penting Admin)
 RUN deno --version && yt-dlp --version
 
+# 10. Switch ke user koyeb
 USER koyeb
 
-# Port fleksibel
+# Port & Start Command
 EXPOSE 8000
 CMD ["sh", "-c", "gunicorn -b 0.0.0.0:${PORT:-8000} app:app --timeout 120"]
