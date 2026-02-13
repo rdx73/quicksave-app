@@ -11,7 +11,7 @@ def get_yt_info(video_url):
     ydl_opts = {
         'quiet': False,
         'verbose': True,
-        'format': 'bv*+ba/b',
+        'format': 'best', # Sederhanakan format untuk pengetesan
         'allow_unsecure_tools': True,
         'allow_remote_scripts': True,
         'cache_dir': cache_path,
@@ -19,8 +19,8 @@ def get_yt_info(video_url):
         'nocheckcertificate': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['web'],
-                # GANTI KE NODE: Karena di Dockerfile kita install nodejs
+                # UBAH INI: Gunakan ios atau tv agar bypass n-challenge lebih mudah
+                'player_client': ['ios', 'android', 'tv'],
                 'js_runtime': 'node'
             }
         },
