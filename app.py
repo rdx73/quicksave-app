@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, Response
 import requests
 import re
 import os
+import time
+import shutil
 import panel # Import modul panel/config
 
 # Import mesin-mesin downloader
@@ -10,6 +12,29 @@ from engines.tiktok import get_tt_info
 from engines.general import get_general_info
 
 app = Flask(__name__)
+
+# --- SISTEM AUTO-CLEANUP (Pencegah RAM Penuh) ---
+# Folder cache sesuai dengan Dockerfile
+CACHE_DIR = os.environ.get('YTDLP_CACHE_DIR', '/app/yt_cache')
+
+def cleanup_old_cache(max_age_seconds=3600):
+    """Menghapus file sampah yang lebih tua dari 1 jam"""
+    if not os.path.exists(CACHE_DIR):
+        return
+    
+    now = time.time()
+    for filename in os.listdir(CACHE_DIR):
+        file_path = os.path.join(CACHE_DIR, filename)
+        try:
+            # Jika umur file sudah lebih dari 1 jam, hapus
+            if os.path.getmtime(file_path) < now - max_age_seconds:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+                print(f"Cleanup: Menghapus file sampah {filename}")
+        except Exception as e:
+            print(f"Cleanup Error: {e}")
 
 # Fungsi untuk membersihkan nama file dari karakter aneh
 def slugify(text):
@@ -71,6 +96,9 @@ def admin_save():
 # --- LOGIKA DOWNLOADER ---
 @app.route('/get_info', methods=['POST'])
 def get_info():
+    # SETIAP REQUEST MASUK, BERSIHKAN SAMPAH LAMA
+    cleanup_old_cache()
+    
     url = request.form.get('url')
     if not url: 
         return jsonify({'success': False, 'error': 'URL kosong'})
@@ -80,7 +108,7 @@ def get_info():
 
     try:
         if 'youtube.com' in url or 'youtu.be' in url:
-            # Menggunakan engines/youtube.py yang sudah kita set pakai Deno
+            # Engine YouTube secara otomatis akan menggunakan Deno di folder global
             return jsonify(get_yt_info(url))
         elif 'tiktok.com' in url:
             return jsonify(get_tt_info(url))
@@ -89,7 +117,7 @@ def get_info():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-# --- PROXY DOWNLOAD (Mengalirkan Video Agar Bisa Didownload Langsung) ---
+# --- PROXY DOWNLOAD ---
 @app.route('/download')
 def proxy_download():
     video_url = request.args.get('url')
@@ -100,17 +128,14 @@ def proxy_download():
         return "URL video tidak ditemukan", 400
 
     try:
-        # Gunakan Header Desktop agar tidak dicurigai sebagai bot mobile murahan
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
             'Accept': '*/*',
             'Connection': 'keep-alive'
         }
         
-        # Stream=True penting agar RAM server Koyeb tidak penuh (Chunk streaming)
+        # Stream=True agar RAM server Koyeb tidak penuh
         req = requests.get(video_url, headers=headers, stream=True, timeout=120, verify=False)
-        
-        # Ambil tipe konten asli dari sumber (video/mp4, dsb)
         content_type = req.headers.get('Content-Type', 'video/mp4')
 
         def generate():
@@ -130,6 +155,9 @@ def proxy_download():
         return f"Gagal mendownload video: {str(e)}", 500
 
 if __name__ == '__main__':
-    # Koyeb menggunakan environment PORT
+    # Pastikan folder cache tersedia saat aplikasi dinyalakan
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
