@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickSave | Admin Mobile Ready</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { 
+            background: #f0f4f8; 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 text-center sm:text-left">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-800">QuickSave Center</h1>
+                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Control Panel v2.0</p>
+            </div>
+            <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-[10px] font-black border border-blue-200">
+                <i class="fas fa-lock mr-1"></i> ADMIN SESSION ACTIVE
+            </div>
+        </header>
+
+        <div class="flex flex-col gap-6">
+            
+            <div class="glass-card rounded-[2rem] p-6 md:p-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h5 class="font-bold text-slate-800"><i class="fas fa-cookie-bite text-blue-500 mr-2"></i> YouTube Engine Cookies</h5>
+                    <button class="text-slate-400 hover:text-blue-500"><i class="fas fa-question-circle"></i></button>
+                </div>
+                <textarea id="cookiesBox" 
+                    class="w-full h-64 md:h-80 bg-slate-50 border border-slate-200 rounded-2xl p-4 font-mono text-[11px] text-slate-600 focus:ring-2 ring-blue-500 outline-none transition-all" 
+                    placeholder="Paste Netscape cookies here...">{{ cookies }}</textarea>
+                <button onclick="save('cookies')" 
+                    class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 active:scale-95 transition-all">
+                    DEPLOY NEW COOKIES
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card rounded-[2rem] p-6">
+                    <h5 class="font-bold text-slate-800 mb-4 text-sm"><i class="fas fa-search text-emerald-500 mr-2"></i> SEO Meta Tags</h5>
+                    <textarea id="metaBox" 
+                        class="w-full h-32 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs focus:ring-2 ring-emerald-500 outline-none">{{ config.meta_tags }}</textarea>
+                </div>
+                
+                <div class="glass-card rounded-[2rem] p-6">
+                    <h5 class="font-bold text-slate-800 mb-4 text-sm"><i class="fas fa-code text-purple-500 mr-2"></i> Custom Scripts</h5>
+                    <textarea id="scriptBox" 
+                        class="w-full h-32 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs focus:ring-2 ring-purple-500 outline-none">{{ config.scripts }}</textarea>
+                </div>
+            </div>
+
+            <button onclick="save('settings')" 
+                class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl font-bold mb-10 transition-all active:scale-95">
+                SAVE ALL CONFIGURATIONS
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function save(type) {
+            const data = {
+                token: new URLSearchParams(window.location.search).get('token'),
+                target: type,
+                content: document.getElementById('cookiesBox').value,
+                meta_tags: document.getElementById('metaBox').value,
+                scripts: document.getElementById('scriptBox').value
+            };
+
+            fetch('/admin/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(res => res.json()).then(res => {
+                if(res.success) alert('✅ Data Berhasil Diupdate!');
+                else alert('❌ Gagal: ' + res.error);
+            });
+        }
+    </script>
+</body>
+</html>

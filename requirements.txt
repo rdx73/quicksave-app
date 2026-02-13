@@ -1,0 +1,5 @@
+Flask
+requests
+gunicorn
+yt-dlp>=2026.02.04
+

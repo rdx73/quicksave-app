@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashDownload - All in One Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen">
+
+    <nav class="bg-gradient-to-r from-blue-700 to-indigo-800 p-4 text-white shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold"><i class="fas fa-bolt mr-2 text-yellow-400"></i> FlashDownload</h1>
+            <div class="flex gap-4 text-xl opacity-80">
+                <i class="fab fa-facebook"></i>
+                <i class="fab fa-instagram"></i>
+                <i class="fab fa-tiktok"></i>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-16 max-w-3xl text-center">
+        <h2 class="text-4xl font-extrabold text-slate-800 mb-2">Video Downloader</h2>
+        <p class="text-slate-600 mb-8 text-lg">Download video dari FB, IG, atau TikTok secara gratis.</p>
+
+        <div class="bg-white p-3 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2">
+            <input type="text" id="video-url" 
+                class="flex-1 p-4 outline-none text-slate-700 rounded-lg bg-slate-50 border border-transparent focus:border-blue-400 transition-all" 
+                placeholder="Tempel link video di sini...">
+            <button onclick="processLink()" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold text-lg transition-all shadow-md">
+                Ambil Video
+            </button>
+        </div>
+
+        <div id="loader" class="hidden mt-12">
+            <div class="inline-block animate-spin text-blue-600 text-5xl mb-4"><i class="fas fa-circle-notch"></i></div>
+            <p class="text-slate-500 font-medium">Sedang memproses link, tunggu sebentar...</p>
+        </div>
+
+        <div id="result" class="hidden mt-12 bg-white p-8 rounded-3xl shadow-2xl border border-slate-100 animate-fade-in">
+            <div class="flex flex-col md:flex-row gap-8 items-center text-left">
+                <div class="relative">
+                    <img id="vid-thumb" src="" class="w-full md:w-56 rounded-2xl shadow-lg border-4 border-white">
+                    <span id="vid-duration" class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded"></span>
+                </div>
+                <div class="flex-1">
+                    <h3 id="vid-title" class="font-bold text-xl text-slate-800 mb-2 leading-tight"></h3>
+                    <p class="text-green-600 font-medium mb-6"><i class="fas fa-check-circle mr-1"></i> Video siap diunduh!</p>
+                    
+                    <a id="download-btn" href="#" 
+                        class="inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transform hover:-translate-y-1 transition-all w-full md:w-auto">
+                        <i class="fas fa-cloud-download-alt mr-3 text-xl"></i> DOWNLOAD SEKARANG
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function processLink() {
+            const url = $('#video-url').val();
+            if(!url) return alert("Masukkan URL videonya dulu ya!");
+
+            $('#result').addClass('hidden');
+            $('#loader').removeClass('hidden');
+
+            $.post('/get_info', {url: url}, function(data) {
+                $('#loader').addClass('hidden');
+                if(data.success) {
+                    $('#vid-thumb').attr('src', data.thumbnail);
+                    $('#vid-title').text(data.title);
+                    $('#vid-duration').text(data.duration);
+                    
+                    // Kita kirimkan juga title ke backend agar nama file rapi
+                    const proxyUrl = `/download?url=${encodeURIComponent(data.download_url)}&title=${encodeURIComponent(data.title)}`;
+                    $('#download-btn').attr('href', proxyUrl);
+                    
+                    $('#result').removeClass('hidden');
+                } else {
+                    alert("Gagal mengambil data. Pastikan link video publik dan coba lagi.");
+                }
+            });
+        }
+    </script>
+
+    <style>
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</body>
+</html>
