@@ -20,7 +20,7 @@ def get_yt_info(video_url):
         'extractor_args': {
             'youtube': {
                 # UBAH INI: Gunakan ios atau tv agar bypass n-challenge lebih mudah
-                'player_client': ['ios', 'android', 'tv'],
+                'player_client': ['tv'],
                 'js_runtime': 'node'
             }
         },
