@@ -18,7 +18,7 @@ app.secret_key = "QUICKSAVE_SECURE_2026" # Baris Tambahan untuk Session
 # Folder cache sesuai dengan Dockerfile
 CACHE_DIR = os.environ.get('YTDLP_CACHE_DIR', '/app/yt_cache')
 
-def cleanup_old_cache(max_age_seconds=3600):
+def cleanup_old_cache(max_age_seconds=1000):
     """Menghapus file sampah yang lebih tua dari 1 jam"""
     if not os.path.exists(CACHE_DIR):
         return
